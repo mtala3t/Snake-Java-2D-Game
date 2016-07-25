@@ -4,20 +4,23 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 import com.mtala3t.snake2d.sound.SoundManger;
 
 /**
-*
-* @author Mohammed.Talaat (mtala3t)
-* @version 1.0
-*/
+ *
+ * @author Mohammed.Talaat (mtala3t)
+ * @version 1.0
+ */
 @SuppressWarnings("serial")
-public class GameBoardPanel extends JPanel {
+public class GameBoardPanel extends JPanel implements ActionListener {
 
 	/** Creates a new instance of GameBoard */
 
@@ -27,10 +30,9 @@ public class GameBoardPanel extends JPanel {
 	private InputManger inputManager;
 	private SoundManger soundManger = null;
 
-	private GameThread gameThread;
-	private TimerThread timerThread;
+	private Timer gameThread;
+	private Timer timerThread;
 
-	private boolean gameRunning = false;
 	private boolean isGameOver = false;
 
 	private int timer = 0;
@@ -49,11 +51,42 @@ public class GameBoardPanel extends JPanel {
 		inputManager = new InputManger(this);
 		soundManger = new SoundManger(soundFilePath);
 
-		gameThread = new GameThread(level);
-		timerThread = new TimerThread();
+		gameThread = new Timer(getDelay(level), this);
+
+		timerThread = new Timer(1000, new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				if (isGameOver()) {
+					stopGame();
+				}
+
+				timer++;
+			}
+		});
+
+		// timerThread.setLogTimers(true);
+		// gameThread.setLogTimers(true);
 
 		addKeyListener(inputManager);
 
+	}
+
+	private int getDelay(int level) {
+
+		int delay = 0;
+
+		if (level == 1) {
+			delay = 140;
+		} else if (level == 2) {
+			delay = 70;
+
+		} else if (level == 3) {
+			delay = 40;
+
+		}
+		return delay;
 	}
 
 	public void paintComponent(Graphics g) {
@@ -66,7 +99,7 @@ public class GameBoardPanel extends JPanel {
 
 		Graphics2D g2 = (Graphics2D) g;
 
-		if (gameRunning) {
+		if (isGameRunning()) {
 
 			snake.move();
 
@@ -140,7 +173,7 @@ public class GameBoardPanel extends JPanel {
 			g2.setColor(Color.WHITE);
 			g2.drawString("Game Over!", 480, 350);
 
-		} else if (!gameRunning) {
+		} else if (!isGameRunning()) {
 			g2.setColor(Color.WHITE);
 			g2.drawString("Press SpaceBar to Start Game!", 400, 500);
 		}
@@ -280,14 +313,11 @@ public class GameBoardPanel extends JPanel {
 
 	}
 
-	@SuppressWarnings("deprecation")
 	public void startGame() {
 
-		gameRunning = true;
-
-		if (gameThread.isAlive()) {
-			gameThread.resume();
-			timerThread.resume();
+		if (gameThread.isRunning()) {
+			gameThread.restart();
+			timerThread.restart();
 			soundManger.startSound();
 
 		} else {
@@ -298,20 +328,17 @@ public class GameBoardPanel extends JPanel {
 
 	}
 
-	@SuppressWarnings("deprecation")
 	public void pauseGame() {
 
-		gameRunning = false;
-		gameThread.suspend();
-		timerThread.suspend();
+		gameThread.stop();
+		timerThread.stop();
 		soundManger.pauseSound();
 		repaint();
 
 	}
 
-	@SuppressWarnings("deprecation")
 	public void stopGame() {
-		gameRunning = false;
+
 		gameThread.stop();
 		timerThread.stop();
 		soundManger.stopSound();
@@ -319,63 +346,18 @@ public class GameBoardPanel extends JPanel {
 	}
 
 	public boolean isGameRunning() {
-		return gameRunning;
+		return gameThread.isRunning() && !isGameOver();
 	}
 
 	public boolean isGameOver() {
 		return isGameOver;
 	}
 
-	class GameThread extends Thread {
-		private int sleepTime;
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
 
-		GameThread(int level) {
-			if (level == 1) {
-				this.sleepTime = 140;
-			} else if (level == 2) {
-				this.sleepTime = 70;
+		repaint();
 
-			} else if (level == 3) {
-				this.sleepTime = 40;
-
-			}
-		}
-
-		public void run() {
-			while (true) {
-				try {
-					Thread.sleep(sleepTime);
-					repaint();
-				} catch (InterruptedException ex) {
-					ex.printStackTrace();
-				}
-			}
-		}
-	}
-
-	class TimerThread extends Thread {
-
-		TimerThread() {
-		}
-
-		@SuppressWarnings("deprecation")
-		public void run() {
-			while (true) {
-
-				try {
-
-					if (isGameOver() == true) {
-						stop();
-					}
-					Thread.sleep(1000);
-					timer++;
-
-				} catch (InterruptedException ex) {
-					ex.printStackTrace();
-				}
-			}
-
-		}
 	}
 
 }
