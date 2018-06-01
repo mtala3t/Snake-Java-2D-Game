@@ -7,3 +7,5 @@ It has three different levels (Easy, Normal, and Hard). The game has some basic 
 The used IDE is Eclipse (I uploaded all project artifacts), also the game JAR file is uploaded.
 
 If you have any questions or want to continue this project feel free to do so :)
+
+Please visit my website. http://www.mohamedtalaat.net/
